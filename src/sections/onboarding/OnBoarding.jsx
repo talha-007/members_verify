@@ -1,8 +1,23 @@
 import '@lottiefiles/lottie-player';
 import { toast } from 'react-toastify';
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { Box, Grid, Button, Container, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Stack,
+  Button,
+  Checkbox,
+  Backdrop,
+  Container,
+  TextField,
+  FormGroup,
+  Typography,
+  FormControlLabel,
+} from '@mui/material';
+
+import { encryptData } from 'src/hooks/crypto';
 
 import authService from 'src/redux/api/userServices';
 
@@ -12,19 +27,50 @@ import LottieComponent from '../../components/lottie';
 import successAnimation from '../../assets/success.json';
 
 const initialValues = {
-  fullname: '',
-  address: '',
+  firstName: '',
+  lastName: '',
+  homeAddress: '',
   identification: '',
   idImage: null,
   dob: '',
 };
 
 const OnBoarding = () => {
+  const { formToken } = useParams();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [checked, setChecked] = useState(false);
 
+  const handleChange = async (event) => {
+    setChecked(event.target.checked);
+    const encryptedData = encryptData(values);
+    const datas = {
+      encryptedData,
+      idImage: values?.idImage,
+      formToken,
+    };
+
+    try {
+      setIsLoading(true);
+      const res = await authService.submitForm(datas);
+
+      if (res.status === 201) {
+        setIsLoading(false);
+        toast.success(res?.data?.message);
+        setShowSuccess(true);
+      }
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
+      toast.error(error?.response?.data?.message);
+    }
+  };
+  const handleOpen = () => {
+    setOpen(true);
+  };
   const handleOnChange = (e) => {
     const { name, value, type, files } = e.target;
 
@@ -48,11 +94,14 @@ const OnBoarding = () => {
     const temp = { ...errors };
 
     // Validate fullname
-    if ('fullname' in fieldValue)
-      temp.fullname = fieldValue.fullname ? '' : 'This Field is Required';
+    if ('firstName' in fieldValue)
+      temp.firstName = fieldValue.firstName ? '' : 'This Field is Required';
+    if ('lastName' in fieldValue)
+      temp.lastName = fieldValue.lastName ? '' : 'This Field is Required';
 
     // Validate address
-    if ('address' in fieldValue) temp.address = fieldValue.address ? '' : 'This Field is Required';
+    if ('homeAddress' in fieldValue)
+      temp.homeAddress = fieldValue.homeAddress ? '' : 'This Field is Required';
 
     // Validate identification
     if ('identification' in fieldValue)
@@ -69,28 +118,18 @@ const OnBoarding = () => {
     });
     return Object.values(temp).every((x) => x === '');
   };
-
+  const handleClose = () => {
+    setOpen(false);
+  };
   const handleSubmit = async () => {
-    const datas = {
-      ...values,
-    };
-    try {
-      setIsLoading(true);
-      if (validations) {
-        const res = await authService.create(datas);
-        console.log(res);
-        if (res.status === 201) {
-          setIsLoading(false);
-          toast.success(res?.data?.message);
-          setShowSuccess(true);
-        }
+    if (validations()) {
+      if (!checked) {
+        // Show the disclaimer if the user hasn't checked the box
+        handleOpen();
       }
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
-      toast.error(error?.response?.data?.message);
     }
   };
+
   return (
     <Box
       sx={{
@@ -143,15 +182,28 @@ const OnBoarding = () => {
                   </Grid>
 
                   {/* Full Name */}
-                  <Grid item xs={12}>
+                  <Grid item xs={12} md={6}>
                     <Typography sx={{ paddingLeft: '10px', fontSize: '12px' }}>
-                      Full Name
+                      First Name
                     </Typography>
                     <TextField
-                      value={values.fullname}
-                      error={Boolean(errors?.fullname)}
-                      helperText={errors?.fullname}
-                      name="fullname"
+                      value={values.firstName}
+                      error={Boolean(errors?.firstName)}
+                      helperText={errors?.firstName}
+                      name="firstName"
+                      fullWidth
+                      onChange={handleOnChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography sx={{ paddingLeft: '10px', fontSize: '12px' }}>
+                      Last Name
+                    </Typography>
+                    <TextField
+                      value={values.lastName}
+                      error={Boolean(errors?.lastName)}
+                      helperText={errors?.lastName}
+                      name="lastName"
                       fullWidth
                       onChange={handleOnChange}
                     />
@@ -174,14 +226,16 @@ const OnBoarding = () => {
                       }}
                     />
                   </Grid>
-                  {/* address */}
+                  {/* homeAddress */}
                   <Grid item xs={12}>
-                    <Typography sx={{ paddingLeft: '10px', fontSize: '12px' }}>Address</Typography>
+                    <Typography sx={{ paddingLeft: '10px', fontSize: '12px' }}>
+                      Home Address
+                    </Typography>
                     <TextField
-                      value={values.address}
-                      error={Boolean(errors?.address)}
-                      helperText={errors?.address}
-                      name="address"
+                      value={values.homeAddress}
+                      error={Boolean(errors?.homeAddress)}
+                      helperText={errors?.homeAddress}
+                      name="homeAddress"
                       fullWidth
                       onChange={handleOnChange}
                     />
@@ -246,6 +300,53 @@ const OnBoarding = () => {
           </Grid>
         </Box>
       </Container>
+      <Backdrop
+        sx={(theme) => ({ zIndex: theme.zIndex.drawer + 1 })}
+        open={open}
+        onClick={handleClose}
+      >
+        <Box
+          sx={{
+            borderRadius: '12px',
+            boxShadow: '2px 4px 10px rgba(0,0,0, .2)',
+            background: '#fff',
+            padding: '3rem',
+            minHeight: '75vh',
+            display: 'flex',
+            width: '400px',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%,-50%)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Stack direction="column" spacing={2}>
+            <Typography sx={{ fontWeight: 'bold' }}>Disclaimer</Typography>
+            <Typography>
+              By checking this box, I certify that the information provided in this form is true and
+              correct. I have reviewed this information and confirm that it is accurate. I am
+              responsible for uploading a valid identification document. I am also responsible for
+              the accuracy of the information submitted on behalf of myself and my association.
+              Failure to upload correct information may result in fines.
+            </Typography>
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={checked}
+                    onChange={handleChange}
+                    inputProps={{ 'aria-label': 'controlled' }}
+                  />
+                }
+                label="I agree"
+              />
+            </FormGroup>
+          </Stack>
+        </Box>
+      </Backdrop>
     </Box>
   );
 };

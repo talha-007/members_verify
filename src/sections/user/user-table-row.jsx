@@ -60,7 +60,7 @@ export default function UserTableRow({
 
         <TableCell>{identification}</TableCell>
         <TableCell>
-          {info} <img width="200px" height="200px" src={`${IMAGE_BASEURL}${info}`} alt="" />{' '}
+          <img width="150px" height="100px" src={`${IMAGE_BASEURL}${info}`} alt="" />{' '}
         </TableCell>
 
         <TableCell align="right">

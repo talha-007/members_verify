@@ -1,10 +1,10 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import axios from 'axios';
 
-// export const API_URL = 'http://localhost:3000';
-// export const IMAGE_BASEURL = 'http://localhost:3000/';
-export const API_URL = 'https://api.membersverify.com/';
-export const IMAGE_BASEURL = 'https://api.membersverify.com/';
+export const API_URL = 'http://localhost:4000';
+export const IMAGE_BASEURL = 'http://localhost:4000/';
+// export const API_URL = 'https://api.membersverify.com/';
+// export const IMAGE_BASEURL = 'https://api.membersverify.com/';
 
 export const callAPi = axios.create({
   withCredentials: true,

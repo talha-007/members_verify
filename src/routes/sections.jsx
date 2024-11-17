@@ -2,6 +2,8 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 
+import ListPage from 'src/pages/list';
+import HomePage from 'src/pages/web/HomePage';
 import OnBoardingPage from 'src/pages/onboarding';
 
 export const Home = lazy(() => import('src/client/pages/Home'));
@@ -17,31 +19,36 @@ export const Page404 = lazy(() => import('src/pages/page-not-found'));
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('token'); // Retrieve token from localStorage
 
-  return token ? children : <Navigate to="/login" replace />;
+  return token ? children : <Navigate to="/" replace />;
 };
 
 export default function Router() {
   const routes = useRoutes([
     {
-      path: '/onboarding-members',
+      path: '/onboarding-members/:formToken',
       element: <OnBoardingPage />, // Accessible to everyone
     },
     {
       path: '/',
       element: (
-        <AdminRoute>
-          {/* Protect dashboard routes */}
-          <DashboardLayout>
-            <Suspense>
-              <Outlet />
-            </Suspense>
-          </DashboardLayout>
-        </AdminRoute>
+        <DashboardLayout>
+          <Suspense>
+            <Outlet />
+          </Suspense>
+        </DashboardLayout>
       ),
       children: [
         { element: <IndexPage />, index: true },
-        { path: '/user', element: <UserPage /> },
-        { path: '/products', element: <ProductsPage /> }, // Add other admin routes here
+        { path: '/', element: <HomePage /> },
+
+        {
+          path: '/list',
+          element: (
+            <AdminRoute>
+              <ListPage />{' '}
+            </AdminRoute>
+          ),
+        },
       ],
     },
     {
